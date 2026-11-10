@@ -1,0 +1,11 @@
+# Скомпилированные файлы Java
+bin/
+*.class
+
+# Данные нашей базы (файлы .dat)
+data/
+*.dat
+*.dat.tmp
+
+# Настройки VS Code
+.vscode/
