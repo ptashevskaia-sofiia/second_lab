@@ -12,6 +12,111 @@
 *   **command** — реализации команд (`Insert`, `Select`, `Update`, `Delete`).
 *   **console** — консольный интерфейс для ввода команд.
 
+### Диаграмма классов
+
+```mermaid
+classDiagram
+    class App {
+        +main(String[] args)
+    }
+    class ConsoleApp {
+        -Database db
+        -Parser parser
+        +run()
+        -printTable()
+    }
+    class Parser {
+        +parse(String sql) Query
+    }
+    class Query {
+        <<interface>>
+        +execute(Database db) Object
+    }
+    class Insert {
+        +execute(Database db) Object
+    }
+    class Select {
+        +execute(Database db) Object
+    }
+    class Update {
+        +execute(Database db) Object
+    }
+    class Delete {
+        +execute(Database db) Object
+    }
+    class Database {
+        -Map~String, Table~ tables
+        -FileStorage storage
+        +registerTable()
+        +getTable()
+        +getDao()
+    }
+    class TableDao {
+        -Table table
+        -FileStorage storage
+        +insert()
+        +findAll()
+        +update()
+        +delete()
+    }
+    class FileStorage {
+        -Path dataDir
+        +save(Table table)
+        +load(String name)
+    }
+    class Table {
+        -String name
+        -TableSchema schema
+        -List~Row~ rows
+    }
+    
+    App --> ConsoleApp
+    ConsoleApp --> Parser
+    ConsoleApp --> Database
+    Parser --> Query
+    Query <|.. Insert
+    Query <|.. Select
+    Query <|.. Update
+    Query <|.. Delete
+    Insert --> Database
+    Select --> Database
+    Update --> Database
+    Delete --> Database
+    Database --> TableDao
+    Database --> FileStorage
+    TableDao --> FileStorage
+    TableDao --> Table
+    FileStorage --> Table
+```
+## Диаграмма последовательностей
+```mermaid
+    sequenceDiagram
+    actor User as Пользователь
+    participant App
+    participant ConsoleApp
+    participant Parser
+    participant Insert as InsertQuery
+    participant Database
+    participant TableDao
+    participant FileStorage
+
+    User->>App: Запускает программу
+    App->>ConsoleApp: run()
+    ConsoleApp->>User: sql>
+    User->>ConsoleApp: "INSERT INTO members VALUES (1, 'Ivanov', 78.5)"
+    ConsoleApp->>Parser: parse(sql)
+    Parser-->>ConsoleApp: new Insert(...)
+    ConsoleApp->>Insert: execute(db)
+    Insert->>Database: getDao("members")
+    Database-->>Insert: TableDao
+    Insert->>TableDao: insert(Row)
+    TableDao->>TableDao: Проверка уникальности PK
+    TableDao->>FileStorage: save(Table)
+    FileStorage-->>TableDao: Успешно сохранено
+    TableDao-->>Insert: Строка добавлена
+    Insert-->>ConsoleApp: "1 строка добавлена."
+    ConsoleApp->>User: Вывод результата
+```
 ### Схема базы данных
 **Таблица `members` (Клиенты):**
 *   `id` (INT) — первичный ключ (PK).
@@ -50,3 +155,7 @@ UPDATE members SET weight = 80.0 WHERE id = 2;
 
 -- Удаление (DELETE)
 DELETE FROM members WHERE name = 'Ivanov';
+```
+
+### Выводы
+В ходе работы была разработана упрощённая СУБД на Java. Реализована сериализация таблиц в файлы, поддержка пяти типов данных, парсинг SQL-подобного языка (INSERT, SELECT, UPDATE, DELETE) и консольный интерфейс. Применены паттерны проектирования (DAO, Command, Iterator). Ограничения: нет поддержки транзакций, сложных JOIN-запросов и индексов.
